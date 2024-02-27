@@ -5,10 +5,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import com.springboot.blog.entity.Post;
 import com.springboot.blog.exception.ResourceNotFoundException;
 import com.springboot.blog.payload.PostDto;
+import com.springboot.blog.payload.PostResponse;
 import com.springboot.blog.repository.PostRepository;
 import com.springboot.blog.service.PostService;
 
@@ -35,16 +37,29 @@ public class PostServiceImplementation implements PostService {
 	}
 
 	@Override
-	public List<PostDto> getAllPosts(int pageNo, int pageSize) {
+	public PostResponse getAllPosts(int pageNo, int pageSize, String sortBy, String sortDirection) {
+		
+		Sort sort = sortDirection.equalsIgnoreCase(Sort.Direction.ASC.name())?Sort.by(sortBy).ascending()
+				:Sort.by(sortBy).descending();
 		
 		//creating pageable instrance
-		Pageable pageable = PageRequest.of(pageNo, pageSize);
+		Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
 		
 		Page<Post> posts = postRepository.findAll(pageable);
 		
 		//get content for the page object
 		List<Post> listOfPosts = posts.getContent();
-		return listOfPosts.stream().map(post -> mapToDto(post)).collect(Collectors.toList());
+		
+		List<PostDto> content = listOfPosts.stream().map(post -> mapToDto(post)).collect(Collectors.toList());
+		PostResponse postResponse = new PostResponse();
+		postResponse.setContent(content);
+		postResponse.setPageNo(posts.getNumber());
+		postResponse.setPageSize(posts.getSize());
+		postResponse.setTotalElements(posts.getTotalElements());
+		postResponse.setTotalPages(posts.getTotalPages());
+		postResponse.setLast(posts.isLast());
+		
+		return postResponse;
 	}
 	
 	//CONVERTING ENTITY INTO DTO
