@@ -25,5 +25,4 @@ public class BlogAPIException extends Exception {
 	public String getMessage() {
 		return message;
 	}
-	
 }

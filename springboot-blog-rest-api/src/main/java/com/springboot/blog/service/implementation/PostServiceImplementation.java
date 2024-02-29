@@ -1,4 +1,5 @@
 package com.springboot.blog.service.implementation;
+import org.modelmapper.ModelMapper;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,10 +19,11 @@ import com.springboot.blog.service.PostService;
 public class PostServiceImplementation implements PostService {
 	@Autowired
 	private PostRepository postRepository;
-	
-	public PostServiceImplementation(PostRepository postRepository) {
-		super();
+	private ModelMapper modelMapper;
+
+	public PostServiceImplementation(PostRepository postRepository, ModelMapper modelMapper) {
 		this.postRepository = postRepository;
+		this.modelMapper = modelMapper;
 	}
 
 	@Override
@@ -64,22 +66,15 @@ public class PostServiceImplementation implements PostService {
 	
 	//CONVERTING ENTITY INTO DTO
 	private PostDto mapToDto(Post post) {
-		PostDto postDto = new PostDto();
-		postDto.setId(post.getId());
-		postDto.setTitle(post.getTitle());
-		postDto.setDescription(post.getDescription());
-		postDto.setContent(post.getContent());
 		
+		PostDto postDto = modelMapper.map(post, PostDto.class);
 		return postDto;
 	}
 	
 	//CONVERTING DTO INTO ENTITY
 	private Post mapToEntity(PostDto postDto) {
-		Post post = new Post();
-		post.setTitle(postDto.getTitle());
-		post.setDescription(postDto.getDescription());
-		post.setContent(postDto.getContent());
 		
+		Post post = modelMapper.map(postDto, Post.class);
 		return post;
 	}
 
