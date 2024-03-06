@@ -1,14 +1,15 @@
 package com.springboot.blog.security;
 import java.io.IOException;
-
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import com.springboot.blog.exception.BlogAPIException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,7 +22,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	private UserDetailsService userDetailsService;
 	
 	public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, UserDetailsService userDetailsService) {
-		super();
 		this.jwtTokenProvider = jwtTokenProvider;
 		this.userDetailsService = userDetailsService;
 	}
@@ -35,21 +35,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		String token = getTokenFromRequest(request);
 		
 		//validate token
-		if(StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
-			
-			//get username from token
-			String username = jwtTokenProvider.getUsername(token);
-			
-			UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-			UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
-					new UsernamePasswordAuthenticationToken(
-							userDetails, 
-							null, 
-							userDetails.getAuthorities());
-			usernamePasswordAuthenticationToken.setDetails(
-					new WebAuthenticationDetailsSource().buildDetails(request));
-			
-			SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+		try {
+			if(StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
+				
+				//get username from token
+				String username = jwtTokenProvider.getUsername(token);
+					
+				UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+				
+				UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = 
+						new UsernamePasswordAuthenticationToken(
+								userDetails, null, userDetails.getAuthorities()
+								);
+				usernamePasswordAuthenticationToken.setDetails(
+						new WebAuthenticationDetailsSource().buildDetails(request));
+					
+				SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+			}
+		} catch (UsernameNotFoundException usernameNotFoundException) {	
+			usernameNotFoundException.printStackTrace();
+		} catch (BlogAPIException blogApiException) {
+			blogApiException.printStackTrace();
 		}
 		filterChain.doFilter(request, response);
 		
