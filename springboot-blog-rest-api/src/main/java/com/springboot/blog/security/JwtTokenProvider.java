@@ -17,10 +17,10 @@ import io.jsonwebtoken.security.Keys;
 @Component
 public class JwtTokenProvider {
 	
-	@Value("${app.jwt-secret}")
+	@Value("${springboot.app.jwtSecret}")
 	private String jwtSecret;
 	
-	@Value("${app-jwt-expiration-milliseconds}")
+	@Value("${springboot.app.jwt.expiration.milliseconds}")
 	private Long jwtExpirationDate;
 	
 	//generate JWT token
